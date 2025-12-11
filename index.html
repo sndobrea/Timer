@@ -418,18 +418,18 @@
                 // Or should it visualize progress through current month?
                 // Context: Weeks is breakdown of Month, Days is breakdown of Week.
                 // So Months is breakdown of Year.
-                const startOfYear = new Date(now.getFullYear(), 0, 1);
-                const startOfNextYear = new Date(now.getFullYear() + 1, 0, 1);
-                const hoursIntoYear = (now - startOfYear) / (1000 * 60 * 60);
-                const totalHoursInYear = (startOfNextYear - startOfYear) / (1000 * 60 * 60);
-                setRingProgress(progMonths, hoursIntoYear / totalHoursInYear, COLOR_MONTHS);
+                const startOfYearCycle = new Date(startDate);
+                startOfYearCycle.setFullYear(startDate.getFullYear() + years);
+                const daysPassedInYear = (now - startOfYearCycle) / msPerDay;
+                setRingProgress(progMonths,  daysPassedInYear / 365, COLOR_MONTHS);
 
                 // Weeks Ring: Progress through current month (0-4 weeks approx)
-                const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-                const startOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-                const hoursIntoMonth = (now - startOfMonth) / (1000 * 60 * 60);
-                const totalHoursInMonth = (startOfNextMonth - startOfMonth) / (1000 * 60 * 60);
-                setRingProgress(progWeeks, hoursIntoMonth / totalHoursInMonth, COLOR_WEEKS);
+                const elapsedMs = now - startDate;
+                const weeks = Math.floor(elapsedMs / (7 * msPerDay));
+                const startOfWeekCycle = new Date(startDate);
+                startOfWeekCycle.setDate(startDate.getDate() + weeks * 7);
+                const hoursPassedInWeekCycle = (now - startOfWeekCycle) / msPerHour;
+                setRingProgress(progWeeks, hoursPassedInWeekCycle / (7 * 24), COLOR_WEEKS);
 
                 // Days Ring: Progress through current week (0-7 days)
                 const hoursIntoWeek = days * 24 + hours + (minutes / 60);
