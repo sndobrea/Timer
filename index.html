@@ -424,7 +424,8 @@
                 setRingProgress(progWeeks, weeks / 4.3, COLOR_WEEKS);
 
                 // Days Ring: Progress through current week (0-7 days)
-                setRingProgress(progDays, days / 7, COLOR_DAYS);
+                const hoursIntoWeek = days * 24 + hours + (minutes / 60);
+                setRingProgress(progDays, hoursIntoWeek / 168, COLOR_DAYS);
 
                 // Hours Ring: Progress through current day (0-24 hours)
                 // Include partial hours (minutes) for smooth effect
