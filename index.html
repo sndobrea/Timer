@@ -9,239 +9,467 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* Apple System Font Stack */
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-            background-color: #000000;
-            background-image: linear-gradient(145deg, #111111 0%, #1a1a1a 100%);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #050505;
+            background-image: radial-gradient(circle at 50% 0%, #1a1a2e 0%, #000000 100%);
             min-height: 100vh;
-            color: #f5f5f7; /* Apple text color */
+            color: #ffffff;
+            overflow-x: hidden;
         }
 
-        /* Glassmorphism subtle specific for Dark Mode */
-        .glass {
-            background: rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        /* Container Inele */
+        .ring-container {
+            position: relative;
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 30px rgba(0,0,0,0.7);
+            margin: 0 auto;
+            background: #000;
+        }
+
+        @media (min-width: 768px) {
+            .ring-container {
+                width: 160px;
+                height: 160px;
+            }
+        }
+
+        /* 1. Inelul Colorat (Progresul) */
+        .ring-progress {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            z-index: 1;
+            transition: background 0.1s linear;
+        }
+
+        /* 2. Masca pentru Liniuțe (Ticks) */
+        .ring-ticks {
+            position: absolute;
+            inset: -1px;
+            border-radius: 50%;
+            z-index: 2;
+        }
+
+        /* 3. Masca Interioară (Gaura Neagră) */
+        .ring-inner {
+            position: absolute;
+            top: 10px; left: 10px; right: 10px; bottom: 10px;
+            background: #0a0a0a;
+            border-radius: 50%;
+            z-index: 3;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+        }
+
+        .ring-content {
+            z-index: 4;
+            text-align: center;
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+        }
+        
+        .pulse-icon {
+            animation: pulse-slow 3s infinite;
+        }
+        @keyframes pulse-slow {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
         }
     </style>
 </head>
 <body class="flex flex-col items-center justify-center p-4">
 
-    <div class="container mx-auto max-w-5xl">
+    <div class="container mx-auto max-w-6xl">
         
-        <!-- Title and Current Date -->
-        <header class="text-center mb-10">
-            <h1 class="text-4xl md:text-6xl font-bold mb-4 tracking-tight">TIME ELAPSED</h1>
-            <p class="text-gray-400 text-lg font-light">
-                Since: <span id="current-start-date" class="font-mono text-white font-medium">...</span>
+        <!-- Header -->
+        <header class="text-center mb-10 relative">
+            <div class="inline-flex items-center gap-4 mb-2">
+                <i class="fas fa-history text-3xl md:text-5xl text-purple-500 pulse-icon"></i>
+                <h1 class="text-3xl md:text-5xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600">
+                    TIME ELAPSED
+                </h1>
+            </div>
+            <p class="text-gray-400 text-sm md:text-lg font-light mt-2">
+                Since: <span id="current-start-date" class="font-mono text-purple-300 font-medium">...</span>
             </p>
         </header>
 
-        <!-- 1. Main Blocks (Breakdown) -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
-            <!-- Days -->
-            <div class="glass rounded-2xl p-4 md:p-6 text-center transform hover:scale-105 transition duration-300">
-                <div class="text-gray-400 text-2xl md:text-3xl mb-2"><i class="fas fa-calendar-day"></i></div>
-                <div id="days" class="text-3xl md:text-5xl font-bold font-mono tracking-tighter">0</div>
-                <div class="text-gray-500 uppercase text-xs md:text-sm mt-2 font-semibold tracking-widest">Days</div>
-            </div>
-
-            <!-- Hours -->
-            <div class="glass rounded-2xl p-4 md:p-6 text-center transform hover:scale-105 transition duration-300">
-                <div class="text-gray-400 text-2xl md:text-3xl mb-2"><i class="fas fa-clock"></i></div>
-                <div id="hours" class="text-3xl md:text-5xl font-bold font-mono tracking-tighter">00</div>
-                <div class="text-gray-500 uppercase text-xs md:text-sm mt-2 font-semibold tracking-widest">Hours</div>
-            </div>
-
-            <!-- Minutes -->
-            <div class="glass rounded-2xl p-4 md:p-6 text-center transform hover:scale-105 transition duration-300">
-                <div class="text-gray-400 text-2xl md:text-3xl mb-2"><i class="fas fa-hourglass-half"></i></div>
-                <div id="minutes" class="text-3xl md:text-5xl font-bold font-mono tracking-tighter">00</div>
-                <div class="text-gray-500 uppercase text-xs md:text-sm mt-2 font-semibold tracking-widest">Minutes</div>
-            </div>
-
-            <!-- Seconds -->
-            <div class="glass rounded-2xl p-4 md:p-6 text-center transform hover:scale-105 transition duration-300 border-b-4 border-white/20">
-                <div class="text-white text-2xl md:text-3xl mb-2"><i class="fas fa-stopwatch"></i></div>
-                <div id="seconds" class="text-3xl md:text-5xl font-bold font-mono tracking-tighter">00</div>
-                <div class="text-gray-500 uppercase text-xs md:text-sm mt-2 font-semibold tracking-widest">Seconds</div>
-            </div>
-        </div>
-
-        <!-- 2. Total Stats (Cumulative) -->
-        <div class="mb-12">
-            <h2 class="text-center text-sm text-gray-500 mb-6 uppercase tracking-widest border-b border-gray-800 pb-2 mx-auto max-w-xs font-semibold">Total Conversion</h2>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                
-                <div class="glass rounded-xl p-4 flex flex-col items-center justify-center">
-                    <span class="text-gray-500 text-[10px] uppercase mb-1 font-bold tracking-wider">Total Days</span>
-                    <span id="total-days" class="text-xl font-mono font-medium text-gray-200">0</span>
-                </div>
-
-                <div class="glass rounded-xl p-4 flex flex-col items-center justify-center">
-                    <span class="text-gray-500 text-[10px] uppercase mb-1 font-bold tracking-wider">Total Hours</span>
-                    <span id="total-hours" class="text-xl font-mono font-medium text-gray-200">0</span>
-                </div>
-
-                <div class="glass rounded-xl p-4 flex flex-col items-center justify-center">
-                    <span class="text-gray-500 text-[10px] uppercase mb-1 font-bold tracking-wider">Total Minutes</span>
-                    <span id="total-minutes" class="text-xl font-mono font-medium text-gray-200">0</span>
-                </div>
-
-                <div class="glass rounded-xl p-4 flex flex-col items-center justify-center">
-                    <span class="text-gray-500 text-[10px] uppercase mb-1 font-bold tracking-wider">Total Seconds</span>
-                    <span id="total-seconds" class="text-xl font-mono font-medium text-gray-200">0</span>
-                </div>
-
-            </div>
-        </div>
-
-        <!-- Settings Area -->
-        <div class="glass rounded-2xl p-6 max-w-lg mx-auto mt-8">
-            <h3 class="text-lg font-semibold mb-4 text-center text-gray-300">Set New Start Date</h3>
+        <!-- 1. TOP ROW: Years, Months, Weeks -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-8 mb-8 justify-items-center max-w-4xl mx-auto">
             
-            <div class="flex flex-col gap-4">
-                <input type="datetime-local" id="date-input" class="w-full p-3 rounded-lg bg-gray-900/50 border border-gray-700 text-white focus:outline-none focus:border-gray-500 transition font-mono text-sm">
-                
-                <div class="flex gap-3">
-                    <button onclick="saveNewDate()" class="flex-1 bg-white hover:bg-gray-200 text-black font-semibold py-2 px-4 rounded-lg transition text-sm">
-                        <i class="fas fa-save mr-2"></i> Save
-                    </button>
-                    <button onclick="resetToDefault()" class="bg-gray-800 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg transition text-sm" title="Reset to default">
-                        <i class="fas fa-undo"></i>
-                    </button>
+            <!-- Years Ring (365 Ticks - Days in Year) -->
+            <div class="flex flex-col items-center">
+                <div class="ring-container">
+                    <div id="prog-years" class="ring-progress"></div>
+                    <div id="tick-years" class="ring-ticks"></div>
+                    <div class="ring-inner">
+                        <div class="ring-content">
+                            <div class="text-yellow-500 text-xl mb-1"><i class="fas fa-crown"></i></div>
+                            <div id="years" class="text-3xl md:text-4xl font-bold font-mono">0</div>
+                            <div class="text-gray-500 text-[10px] md:text-xs uppercase tracking-widest mt-1">Years</div>
+                        </div>
+                    </div>
                 </div>
-                <p id="status-msg" class="text-center text-xs mt-2 h-5 text-gray-400 font-medium"></p>
+            </div>
+
+            <!-- Months Ring (12 Ticks - Months in Year) -->
+            <div class="flex flex-col items-center">
+                <div class="ring-container">
+                    <div id="prog-months" class="ring-progress"></div>
+                    <div id="tick-months" class="ring-ticks"></div>
+                    <div class="ring-inner">
+                        <div class="ring-content">
+                            <div class="text-cyan-400 text-xl mb-1"><i class="fas fa-moon"></i></div>
+                            <div id="months" class="text-3xl md:text-4xl font-bold font-mono">0</div>
+                            <div class="text-gray-500 text-[10px] md:text-xs uppercase tracking-widest mt-1">Months</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Weeks Ring (4 Ticks - Weeks in Month) -->
+            <div class="flex flex-col items-center">
+                <div class="ring-container">
+                    <div id="prog-weeks" class="ring-progress"></div>
+                    <div id="tick-weeks" class="ring-ticks"></div>
+                    <div class="ring-inner">
+                        <div class="ring-content">
+                            <div class="text-indigo-400 text-xl mb-1"><i class="fas fa-calendar-week"></i></div>
+                            <div id="weeks" class="text-3xl md:text-4xl font-bold font-mono">0</div>
+                            <div class="text-gray-500 text-[10px] md:text-xs uppercase tracking-widest mt-1">Weeks</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- 2. BOTTOM ROW: Days, Hours, Minutes, Seconds -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-16 justify-items-center">
+            
+            <!-- Days Ring (7 Ticks - Days in Week) -->
+            <div class="flex flex-col items-center">
+                <div class="ring-container">
+                    <div id="prog-days" class="ring-progress"></div>
+                    <div id="tick-days" class="ring-ticks"></div>
+                    <div class="ring-inner">
+                        <div class="ring-content">
+                            <div class="text-pink-500 text-xl mb-1"><i class="fas fa-calendar-alt"></i></div>
+                            <div id="days" class="text-3xl md:text-4xl font-bold font-mono">0</div>
+                            <div class="text-gray-500 text-[10px] md:text-xs uppercase tracking-widest mt-1">Days</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hours Ring (24 Ticks - Hours in Day) -->
+            <div class="flex flex-col items-center">
+                <div class="ring-container">
+                    <div id="prog-hours" class="ring-progress"></div>
+                    <div id="tick-hours" class="ring-ticks"></div>
+                    <div class="ring-inner">
+                        <div class="ring-content">
+                            <div class="text-blue-500 text-xl mb-1"><i class="fas fa-clock"></i></div>
+                            <div id="hours" class="text-3xl md:text-4xl font-bold font-mono">00</div>
+                            <div class="text-gray-500 text-[10px] md:text-xs uppercase tracking-widest mt-1">Hours</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Minutes Ring (60 Ticks - Minutes in Hour) -->
+            <div class="flex flex-col items-center">
+                <div class="ring-container">
+                    <div id="prog-minutes" class="ring-progress"></div>
+                    <div id="tick-minutes" class="ring-ticks"></div>
+                    <div class="ring-inner">
+                        <div class="ring-content">
+                            <div class="text-green-500 text-xl mb-1"><i class="fas fa-hourglass-half"></i></div>
+                            <div id="minutes" class="text-3xl md:text-4xl font-bold font-mono">00</div>
+                            <div class="text-gray-500 text-[10px] md:text-xs uppercase tracking-widest mt-1">Minutes</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Seconds Ring (60 Ticks - Seconds in Minute) -->
+            <div class="flex flex-col items-center">
+                <div class="ring-container">
+                    <div id="prog-seconds" class="ring-progress"></div>
+                    <div id="tick-seconds" class="ring-ticks"></div>
+                    <div class="ring-inner">
+                        <div class="ring-content">
+                            <div class="text-orange-500 text-xl mb-1"><i class="fas fa-bolt"></i></div>
+                            <div id="seconds" class="text-3xl md:text-4xl font-bold font-mono">00</div>
+                            <div class="text-gray-500 text-[10px] md:text-xs uppercase tracking-widest mt-1">Seconds</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- 3. Stats & Settings -->
+        <div class="glass-panel rounded-3xl p-6 md:p-8 max-w-4xl mx-auto w-full">
+            <h2 class="text-center text-xs text-gray-500 mb-6 uppercase tracking-[0.2em] font-bold">Total Lifetime Conversion</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 border-b border-gray-800 pb-8">
+                <div class="text-center"><span class="block text-gray-600 text-[10px] uppercase font-bold mb-1">Total Days</span><span id="total-days" class="text-sm md:text-lg font-mono text-pink-200">0</span></div>
+                <div class="text-center"><span class="block text-gray-600 text-[10px] uppercase font-bold mb-1">Total Hours</span><span id="total-hours" class="text-sm md:text-lg font-mono text-blue-200">0</span></div>
+                <div class="text-center"><span class="block text-gray-600 text-[10px] uppercase font-bold mb-1">Total Minutes</span><span id="total-minutes" class="text-sm md:text-lg font-mono text-green-200">0</span></div>
+                <div class="text-center"><span class="block text-gray-600 text-[10px] uppercase font-bold mb-1">Total Seconds</span><span id="total-seconds" class="text-sm md:text-lg font-mono text-orange-200">0</span></div>
+            </div>
+            <div class="text-center">
+                <details class="group">
+                    <summary class="cursor-pointer text-gray-500 hover:text-white transition text-sm list-none select-none"><span class="mr-2"><i class="fas fa-cog"></i> Configure Date</span><i class="fas fa-chevron-down group-open:rotate-180 transition-transform"></i></summary>
+                    <div class="mt-6 max-w-md mx-auto bg-black/40 p-4 rounded-xl border border-gray-800">
+                        <input type="datetime-local" id="date-input" class="w-full p-3 mb-4 rounded bg-gray-900 border border-gray-700 text-white focus:outline-none focus:border-purple-500 font-mono text-sm">
+                        <div class="flex gap-3"><button onclick="saveNewDate()" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded transition text-sm">Save Date</button><button onclick="resetToDefault()" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded transition text-sm">Reset</button></div>
+                        <p id="status-msg" class="text-center text-xs mt-3 h-4 text-green-400"></p>
+                    </div>
+                </details>
             </div>
         </div>
 
     </div>
 
     <script>
-        // DEFAULT CONFIGURATION
-        // December 11, 2025, 3:00 PM
         const DEFAULT_DATE = new Date(2025, 11, 11, 15, 0, 0); 
-
         let startDate;
         let timerInterval;
 
-        // DOM Elements
+        // Elements - Numbers
+        const yearsEl = document.getElementById('years');
+        const monthsEl = document.getElementById('months');
+        const weeksEl = document.getElementById('weeks');
         const daysEl = document.getElementById('days');
         const hoursEl = document.getElementById('hours');
         const minutesEl = document.getElementById('minutes');
         const secondsEl = document.getElementById('seconds');
         
+        // Elements - Ring Progress
+        const progYears = document.getElementById('prog-years');
+        const progMonths = document.getElementById('prog-months');
+        const progWeeks = document.getElementById('prog-weeks');
+        const progDays = document.getElementById('prog-days');
+        const progHours = document.getElementById('prog-hours');
+        const progMinutes = document.getElementById('prog-minutes');
+        const progSeconds = document.getElementById('prog-seconds');
+
+        // Elements - Ring Ticks
+        const tickYears = document.getElementById('tick-years');
+        const tickMonths = document.getElementById('tick-months');
+        const tickWeeks = document.getElementById('tick-weeks');
+        const tickDays = document.getElementById('tick-days');
+        const tickHours = document.getElementById('tick-hours');
+        const tickMinutes = document.getElementById('tick-minutes');
+        const tickSeconds = document.getElementById('tick-seconds');
+
+        // Stats & UI
         const totalDaysEl = document.getElementById('total-days');
         const totalHoursEl = document.getElementById('total-hours');
         const totalMinutesEl = document.getElementById('total-minutes');
         const totalSecondsEl = document.getElementById('total-seconds');
-
         const dateDisplayEl = document.getElementById('current-start-date');
         const dateInput = document.getElementById('date-input');
         const statusMsg = document.getElementById('status-msg');
 
-        // Initialization
+        // Colors
+        const COLOR_YEARS = '#eab308'; 
+        const COLOR_MONTHS= '#22d3ee'; 
+        const COLOR_WEEKS = '#818cf8'; 
+        const COLOR_DAYS  = '#ec4899'; 
+        const COLOR_HOURS = '#3b82f6'; 
+        const COLOR_MINS  = '#22c55e'; 
+        const COLOR_SECS  = '#f97316'; 
+        const COLOR_BG    = '#111111'; 
+
         function init() {
             loadDate();
+            setupStaticTicks();
             startTimer();
-            
-            // Set input to current local time
             const now = new Date();
             now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
             dateInput.value = now.toISOString().slice(0, 16);
         }
 
-        // Load date from LocalStorage or use Default
         function loadDate() {
             const savedDate = localStorage.getItem('myTimerStartDate');
-            
-            if (savedDate) {
-                startDate = new Date(savedDate);
-            } else {
-                startDate = DEFAULT_DATE;
-            }
-
-            // Display current reference date
+            startDate = savedDate ? new Date(savedDate) : DEFAULT_DATE;
             const options = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
             dateDisplayEl.textContent = startDate.toLocaleDateString('en-US', options);
         }
 
-        // Timer Logic
+        // --- DRAW TICKS (SCALES) ---
+        function setTicks(element, count) {
+            const deg = 360 / count;
+            // Adjust gap size for visibility based on count density
+            let gap = 1.5; 
+            if(count >= 365) gap = 0.5; 
+            if(count <= 12) gap = 2.5;
+            if(count <= 4) gap = 5;
+
+            // Repeating gradient to create "tick marks" mask
+            element.style.background = `repeating-conic-gradient(#050505 0deg ${gap}deg, transparent ${gap}deg ${deg}deg)`;
+        }
+
+        function setupStaticTicks() {
+            // SCALES ARE NOW LOGICAL CONTAINERS:
+            setTicks(tickYears, 365);  // Days in a year
+            setTicks(tickMonths, 12);  // Months in a year
+            setTicks(tickWeeks, 4);    // Approx weeks in a month
+            setTicks(tickDays, 7);     // Days in a week
+            setTicks(tickHours, 24);   // Hours in a day
+            setTicks(tickMinutes, 60); // Minutes in an hour
+            setTicks(tickSeconds, 60); // Seconds in a minute
+        }
+
+        function setRingProgress(element, percent, color) {
+            const degrees = percent * 360;
+            element.style.background = `conic-gradient(${color} ${degrees}deg, ${COLOR_BG} ${degrees}deg 360deg)`;
+        }
+
         function startTimer() {
             if (timerInterval) clearInterval(timerInterval);
 
             function update() {
                 const now = new Date();
-                let diff = now - startDate;
+                const diffAbs = now - startDate; 
 
-                // Time constants
                 const msPerSecond = 1000;
                 const msPerMinute = 60 * 1000;
                 const msPerHour = 60 * 60 * 1000;
                 const msPerDay = 24 * 60 * 60 * 1000;
 
-                // --- 1. MAIN TIMER CALCULATION (Breakdown) ---
-                const diffAbs = diff; 
+                // --- 1. PRECISE TIME BREAKDOWN LOGIC ---
+                // Years
+                let tempDate = new Date(startDate);
+                let years = 0;
+                while (true) {
+                    tempDate.setFullYear(tempDate.getFullYear() + 1);
+                    if (tempDate > now) {
+                        tempDate.setFullYear(tempDate.getFullYear() - 1);
+                        break;
+                    }
+                    years++;
+                }
 
-                const days = Math.floor(diffAbs / msPerDay);
-                const hours = Math.floor((diffAbs % msPerDay) / msPerHour);
-                const minutes = Math.floor((diffAbs % msPerHour) / msPerMinute);
-                const seconds = Math.floor((diffAbs % msPerMinute) / msPerSecond);
+                // Months
+                let months = 0;
+                while (true) {
+                    tempDate.setMonth(tempDate.getMonth() + 1);
+                    if (tempDate > now) {
+                        tempDate.setMonth(tempDate.getMonth() - 1);
+                        break;
+                    }
+                    months++;
+                }
 
+                // Days (Remaining after years/months logic)
+                const msRemaining = now - tempDate; 
+                const totalDaysInCurrentCycle = Math.floor(msRemaining / msPerDay);
+
+                // Weeks & Days Breakdown
+                const weeks = Math.floor(totalDaysInCurrentCycle / 7);
+                const days = totalDaysInCurrentCycle % 7;
+
+                // Time Remainders
+                const hours = Math.floor((msRemaining % msPerDay) / msPerHour);
+                const minutes = Math.floor((msRemaining % msPerHour) / msPerMinute);
+                const seconds = Math.floor((msRemaining % msPerMinute) / msPerSecond);
+
+                // --- 2. UPDATE TEXT VALUES ---
+                yearsEl.innerText = years;
+                monthsEl.innerText = months;
+                weeksEl.innerText = weeks;
                 daysEl.innerText = days;
-                hoursEl.innerText = Math.abs(hours) < 10 ? '0' + Math.abs(hours) : Math.abs(hours);
-                minutesEl.innerText = Math.abs(minutes) < 10 ? '0' + Math.abs(minutes) : Math.abs(minutes);
-                secondsEl.innerText = Math.abs(seconds) < 10 ? '0' + Math.abs(seconds) : Math.abs(seconds);
+                hoursEl.innerText = hours < 10 ? '0' + hours : hours;
+                minutesEl.innerText = minutes < 10 ? '0' + minutes : minutes;
+                secondsEl.innerText = seconds < 10 ? '0' + seconds : seconds;
 
-                // --- 2. TOTAL STATS CALCULATION (Cumulative) ---
-                const tDays = Math.floor(diffAbs / msPerDay);
-                const tHours = Math.floor(diffAbs / msPerHour);
-                const tMinutes = Math.floor(diffAbs / msPerMinute);
-                const tSeconds = Math.floor(diffAbs / msPerSecond);
+                // --- 3. UPDATE RINGS (SCALES MATCHED TO TICKS) ---
 
-                // Use en-US locale for comma separators (e.g., 1,000)
+                // Years Ring: Progress through current year (0-365 days)
+                const startOfYearCycle = new Date(startDate);
+                startOfYearCycle.setFullYear(startDate.getFullYear() + years);
+                const daysPassedInYear = (now - startOfYearCycle) / msPerDay;
+                setRingProgress(progYears, daysPassedInYear / 365, COLOR_YEARS);
+
+                // Months Ring: Progress through current year (0-12 months)
+                // Actually, the text says "Months", meaning months PASSED.
+                // The ring should visualize the months accumulated (0-12).
+                // Or should it visualize progress through current month?
+                // Context: Weeks is breakdown of Month, Days is breakdown of Week.
+                // So Months is breakdown of Year.
+                setRingProgress(progMonths, months / 12, COLOR_MONTHS);
+
+                // Weeks Ring: Progress through current month (0-4 weeks approx)
+                setRingProgress(progWeeks, weeks / 4.3, COLOR_WEEKS);
+
+                // Days Ring: Progress through current week (0-7 days)
+                setRingProgress(progDays, days / 7, COLOR_DAYS);
+
+                // Hours Ring: Progress through current day (0-24 hours)
+                // Include partial hours (minutes) for smooth effect
+                const hoursFloat = hours + (minutes/60);
+                setRingProgress(progHours, hoursFloat / 24, COLOR_HOURS);
+
+                // Minutes Ring: Progress through current hour (0-60 minutes)
+                const minutesFloat = minutes + (seconds/60);
+                setRingProgress(progMinutes, minutesFloat / 60, COLOR_MINS);
+
+                // Seconds Ring: Progress through current minute (0-60 seconds)
+                const secondsFloat = seconds + (now.getMilliseconds()/1000);
+                setRingProgress(progSeconds, secondsFloat / 60, COLOR_SECS);
+
+
+                // --- 4. TOTAL LIFETIME STATS ---
+                const diffAbsTotal = now - startDate;
+                const tDays = Math.floor(diffAbsTotal / msPerDay);
+                const tHours = Math.floor(diffAbsTotal / msPerHour);
+                const tMinutes = Math.floor(diffAbsTotal / msPerMinute);
+                const tSeconds = Math.floor(diffAbsTotal / msPerSecond);
+
                 totalDaysEl.innerText = tDays.toLocaleString('en-US');
                 totalHoursEl.innerText = tHours.toLocaleString('en-US');
                 totalMinutesEl.innerText = tMinutes.toLocaleString('en-US');
                 totalSecondsEl.innerText = tSeconds.toLocaleString('en-US');
             }
 
-            update(); 
-            timerInterval = setInterval(update, 1000); 
+            update();
+            timerInterval = setInterval(update, 50); 
         }
 
-        // Save new date
         function saveNewDate() {
             const val = dateInput.value;
             if (!val) return;
-
             const newDate = new Date(val);
-            
-            if (isNaN(newDate.getTime())) {
-                statusMsg.textContent = "Invalid date!";
-                statusMsg.className = "text-center text-xs mt-2 h-5 text-red-400 font-medium";
-                return;
-            }
-
+            if (isNaN(newDate.getTime())) return;
             localStorage.setItem('myTimerStartDate', newDate.toISOString());
             loadDate();
             startTimer();
-
-            statusMsg.textContent = "Date saved successfully!";
-            statusMsg.className = "text-center text-xs mt-2 h-5 text-green-400 font-medium";
+            statusMsg.textContent = "Saved!";
             setTimeout(() => { statusMsg.textContent = ""; }, 3000);
         }
 
-        // Reset to Default
         function resetToDefault() {
             localStorage.removeItem('myTimerStartDate');
             loadDate();
             startTimer();
-            statusMsg.textContent = "Reset to default date.";
-            statusMsg.className = "text-center text-xs mt-2 h-5 text-yellow-400 font-medium";
+            statusMsg.textContent = "Reset.";
             setTimeout(() => { statusMsg.textContent = ""; }, 3000);
         }
 
