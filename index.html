@@ -418,18 +418,23 @@
                 // Or should it visualize progress through current month?
                 // Context: Weeks is breakdown of Month, Days is breakdown of Week.
                 // So Months is breakdown of Year.
-                const startOfYearCycle = new Date(startDate);
-                startOfYearCycle.setFullYear(startDate.getFullYear() + years);
-                const daysPassedInYear = (now - startOfYearCycle) / msPerDay;
-                setRingProgress(progMonths,  daysPassedInYear / 365, COLOR_MONTHS);
+                const currentYearStart = new Date(startDate);
+                currentYearStart.setFullYear(startDate.getFullYear() + years);
+                const nextYearStart = new Date(currentYearStart);
+                nextYearStart.setFullYear(currentYearStart.getFullYear() + 1);
+                const msPassedInYear = now - currentYearStart;
+                const msTotalInYear = nextYearStart - currentYearStart;
+                setRingProgress(progMonths, msPassedInYear / msTotalInYear, COLOR_MONTHS);
 
                 // Weeks Ring: Progress through current month (0-4 weeks approx)
-                const elapsedMs = now - startDate;
-                const weeks = Math.floor(elapsedMs / (7 * msPerDay));
-                const startOfWeekCycle = new Date(startDate);
-                startOfWeekCycle.setDate(startDate.getDate() + weeks * 7);
-                const hoursPassedInWeekCycle = (now - startOfWeekCycle) / msPerHour;
-                setRingProgress(progWeeks, hoursPassedInWeekCycle / (7 * 24), COLOR_WEEKS);
+                const currentMonthStart = new Date(startDate);
+                currentMonthStart.setFullYear(startDate.getFullYear() + years);
+                currentMonthStart.setMonth(startDate.getMonth() + months);
+                const nextMonthStart = new Date(currentMonthStart);
+                nextMonthStart.setMonth(currentMonthStart.getMonth() + 1);
+                const msPassedInMonth = now - currentMonthStart;
+                const msTotalInMonth = nextMonthStart - currentMonthStart;
+                setRingProgress(progWeeks, msPassedInMonth / msTotalInMonth, COLOR_WEEKS);
 
                 // Days Ring: Progress through current week (0-7 days)
                 const hoursIntoWeek = days * 24 + hours + (minutes / 60);
