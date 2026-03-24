@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fasting Tracker Pro</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: "Manrope", "Segoe UI", sans-serif;
+        }
+
+        /* Pulse Animation for Active Dot */
+        @keyframes pulse-glow {
+            0% {
+                box-shadow: 0 0 0 0 rgba(227, 18, 33, 0.6);
+            }
+
+            70% {
+                box-shadow: 0 0 0 12px rgba(227, 18, 33, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(227, 18, 33, 0);
+            }
+        }
+
+        .active-dot {
+            animation: pulse-glow 2s infinite;
+        }
+
+        /* Custom Scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 8px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #262626;
+            border-radius: 4px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #404040;
+        }
+
+        /* Shadcn UI specific tweaks */
+        .shadcn-popover {
+            box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.8);
+            transform-origin: top left;
+            animation: popoverIn 0.15s ease-out forwards;
+        }
+
+        @keyframes popoverIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95) translateY(-5px);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body
+    class="bg-[#050505] text-white font-sans min-h-screen flex flex-col selection:bg-red-600 selection:text-white overflow-x-hidden">
+
+    <!-- Compact Header -->
+    <header class="sticky top-0 z-50 border-b border-[#1A1A1A] bg-black/80 shadow-md backdrop-blur-md">
+        <div class="grid w-full grid-cols-1 gap-2 px-4 py-2 md:grid-cols-[1fr_auto_1fr] md:items-center">
+            <div class="flex items-center gap-3">
+                <div class="flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="#e31221" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    <h1 class="text-base font-black tracking-tight">FASTING<span class="text-[#e31221]">TRACKER</span></h1>
+                </div>
+
+                <nav class="flex items-center gap-2 rounded-lg border border-[#262626] bg-[#111] p-1">
+                    <a href="fasting.html"
+                        class="rounded-md bg-[#e31221] px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-white">Fasting</a>
+                    <a href="timer.html"
+                        class="rounded-md px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-gray-300 hover:bg-[#1f1f1f] hover:text-white">Timer</a>
+                </nav>
+            </div>
+
+            <div class="justify-self-center">
+                <div id="datetime-picker-container"
+                    class="flex items-center rounded-lg border border-[#1A1A1A] bg-[#0d0d0d] p-1 shadow-inner">
+                    <div class="relative">
+                        <button id="datetime-trigger" onclick="toggleDateMenu(event)"
+                            class="flex w-[190px] items-center justify-start gap-2 rounded-md border border-[#262626] bg-[#141414] px-2.5 py-1 text-xs font-medium text-gray-200 transition-colors hover:bg-[#1f1f1f] focus:outline-none focus:ring-2 focus:ring-[#333]">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                class="text-gray-400">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="16" y1="2" x2="16" y2="6"></line>
+                                <line x1="8" y1="2" x2="8" y2="6"></line>
+                                <line x1="3" y1="10" x2="21" y2="10"></line>
+                            </svg>
+                            <span id="datetime-display" class="truncate pt-[1px]">Select date...</span>
+                        </button>
+
+                        <!-- Popover Dropdown (Horizontal Layout fixed with explicit flex class) -->
+                        <div id="datetime-popover"
+                            class="shadcn-popover absolute top-[calc(100%+8px)] left-1/2 z-[100] hidden w-max -translate-x-1/2 flex flex-row flex-nowrap gap-4 rounded-xl border border-[#262626] bg-[#0A0A0A] p-4 shadow-2xl md:left-0 md:translate-x-0">
+
+                            <!-- Calendar Section -->
+                            <div class="w-[240px] shrink-0 flex flex-col gap-3">
+                                <!-- Calendar Header -->
+                                <div class="flex justify-between items-center px-1 h-7">
+                                    <button onclick="prevMonth(event)"
+                                        class="w-7 h-7 flex items-center justify-center rounded-md hover:bg-[#1A1A1A] border border-transparent hover:border-[#262626] transition-colors text-gray-400 hover:text-white">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <path d="m15 18-6-6 6-6" />
+                                        </svg>
+                                    </button>
+                                    <span id="calendar-month"
+                                        class="text-[13px] font-bold text-gray-200 tracking-wide">March 2026</span>
+                                    <button onclick="nextMonth(event)"
+                                        class="w-7 h-7 flex items-center justify-center rounded-md hover:bg-[#1A1A1A] border border-transparent hover:border-[#262626] transition-colors text-gray-400 hover:text-white">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <path d="m9 18 6-6-6-6" />
+                                        </svg>
+                                    </button>
+                                </div>
+                                <!-- Calendar Grid -->
+                                <div id="calendar-grid" class="grid grid-cols-7 gap-y-1 gap-x-1">
+                                    <!-- Generated via JS -->
+                                </div>
+                            </div>
+
+                            <!-- Divider -->
+                            <div class="w-px bg-[#262626] my-1 shrink-0"></div>
+
+                            <!-- Time Section (Right Side) -->
+                            <div class="w-[180px] shrink-0 flex flex-col gap-3">
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div class="text-center text-[11px] font-bold text-gray-400 tracking-wide">Hour</div>
+                                    <div class="text-center text-[11px] font-bold text-gray-400 tracking-wide">Minute</div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div id="hours-list" class="h-[230px] overflow-y-auto custom-scrollbar flex flex-col gap-1 pr-1">
+                                    </div>
+                                    <div id="minutes-list" class="h-[230px] overflow-y-auto custom-scrollbar flex flex-col gap-1 pr-1">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-1.5 md:justify-self-end">
+                <button onclick="setNow()"
+                    class="rounded-md border border-[#262626] bg-[#1f1f1f] px-2.5 py-1 text-[10px] font-bold tracking-wider text-gray-300 shadow-sm transition-colors hover:bg-[#2A2A2A]"
+                    title="Set to exact current time">
+                    NOW
+                </button>
+                <button onclick="saveFastingTime()"
+                    class="rounded-md bg-[#e31221] px-3 py-1 text-[10px] font-bold tracking-wider text-white transition-colors hover:bg-[#b00e19] shadow-[0_0_10px_rgba(227,18,33,0.3)]">
+                    SET
+                </button>
+                <button onclick="resetFasting()"
+                    class="rounded-md p-1.5 text-gray-500 transition-colors hover:bg-[#1f1f1f] hover:text-white"
+                    title="Reset Session">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                        <path d="M3 3v5h5" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Timeline Area -->
+    <main
+        class="flex-1 w-full bg-[#0a0a0a] relative flex items-center justify-center min-h-[600px] xl:min-h-[700px] py-12 overflow-hidden">
+
+        <!-- Empty State Message -->
+        <div id="empty-state"
+            class="absolute inset-0 flex flex-col items-center justify-center bg-[#0a0a0a] z-40 transition-opacity duration-500">
+            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none"
+                stroke="#262626" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mb-4">
+                <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
+                <line x1="16" x2="16" y1="2" y2="6" />
+                <line x1="8" x2="8" y1="2" y2="6" />
+                <line x1="3" x2="21" y1="10" y2="10" />
+                <path d="M8 14h.01" />
+                <path d="M12 14h.01" />
+                <path d="M16 14h.01" />
+                <path d="M8 18h.01" />
+                <path d="M12 18h.01" />
+                <path d="M16 18h.01" />
+            </svg>
+            <h2 class="text-2xl font-bold text-gray-400 mb-1">No fasting session active</h2>
+            <p class="text-gray-600 text-base font-medium">Click NOW or set a date to start tracking.</p>
+        </div>
+
+        <!-- Timeline Container -->
+        <div id="timeline-container"
+            class="w-full max-w-[1900px] mx-auto relative opacity-0 transition-opacity duration-500 flex items-center justify-center">
+
+            <!-- Main Horizontal Line -->
+            <div
+                class="relative w-[calc(100%-220px)] md:w-[calc(100%-260px)] xl:w-[calc(100%-320px)] h-1.5 bg-[#1A1A1A] rounded-full shadow-inner">
+                <!-- Progress Line -->
+                <div id="progress-line"
+                    class="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-[#8b0000] to-[#e31221] rounded-full transition-all duration-1000 ease-linear shadow-[0_0_15px_rgba(227,18,33,0.7)] z-0"
+                    style="width: 0%;"></div>
+
+                <!-- Wrapper for Nodes -->
+                <div id="nodes-wrapper" class="absolute inset-0 z-10"></div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Detailed Footer -->
+    <footer class="bg-[#0B0B0B] border-t border-[#1A1A1A] py-5 relative z-50">
+        <div class="max-w-[95vw] mx-auto px-4 grid grid-cols-3 items-center">
+
+            <!-- Left: Current Stage -->
+            <div class="flex flex-col items-start justify-center">
+                <p class="text-[10px] text-gray-500 font-bold uppercase tracking-[0.2em] mb-1">Current Stage</p>
+                <div id="current-stage-display"
+                    class="text-sm md:text-base font-bold text-gray-300 transition-colors duration-300">
+                    --
+                </div>
+            </div>
+
+            <!-- Center: Total Time -->
+            <div class="flex flex-col items-center justify-center">
+                <p class="text-[10px] text-gray-500 font-bold uppercase tracking-[0.2em] mb-1">Total Time Elapsed</p>
+                <div id="total-time"
+                    class="text-3xl md:text-4xl font-black text-white font-mono tracking-tight drop-shadow-[0_0_10px_rgba(255,255,255,0.05)]">
+                    00h 00m 00s
+                </div>
+            </div>
+
+            <!-- Right: Next Stage -->
+            <div class="flex flex-col items-end justify-center">
+                <p class="text-[10px] text-gray-500 font-bold uppercase tracking-[0.2em] mb-1">Next Stage</p>
+                <div id="next-stage-display"
+                    class="text-sm md:text-base font-bold text-gray-400 transition-colors duration-300 text-right">
+                    --
+                </div>
+            </div>
+
+        </div>
+    </footer>
+
+    <script>
+        const stagesData = [
+            { hours: "0-4", startHour: 0, endHour: 4, title: "Glucose Burning", tags: ["BLOOD SUGAR STABLE"] },
+            { hours: "4-12", startHour: 4, endHour: 12, title: "Glycogen Depletion", tags: ["BLOOD GLUCOSE DROPS", "⚠️ MILD HUNGER"] },
+            { hours: "12-15", startHour: 12, endHour: 15, title: "Fat Breakdown Begins", tags: ["FATTY ACIDS → KETONES", "⚠️ BAD BREATH"] },
+            { hours: "15-24", startHour: 15, endHour: 24, title: "Deep Ketosis", tags: ["SHARP FOCUS & MEMORY", "HUNGER SUBSIDES"] },
+            { hours: "24-48", startHour: 24, endHour: 48, title: "Autophagy Activates", tags: ["♻️ CELLULAR RECYCLING", "DAMAGED PROTEINS CLEARED", "FAT BURNING ACCELERATES"] },
+            { hours: "48-72", startHour: 48, endHour: 72, title: "Peak Autophagy", tags: ["AUTOPHAGY PEAKS", "IMMUNE SYSTEM RESETS", "GH RISES — MUSCLE PROTECTED"] },
+            { hours: "72+", startHour: 72, endHour: 9999, title: "Protein Turnover", tags: ["OLD PROTEINS BROKEN DOWN", "⚠️ MUSCLE RISK — USE SPARINGLY"] }
+        ];
+
+        let fastingStartTime = null;
+        let timerInterval = null;
+
+        // --- Custom Date & Time Picker Logic ---
+        let currentPickerDate = new Date();
+        currentPickerDate.setSeconds(0);
+        currentPickerDate.setMilliseconds(0);
+        let viewMonth = new Date(currentPickerDate.getFullYear(), currentPickerDate.getMonth(), 1);
+
+        // Fix for native Popover API conflict
+        function toggleDateMenu(e) {
+            if (e) e.stopPropagation();
+            const popover = document.getElementById('datetime-popover');
+            popover.classList.toggle('hidden');
+
+            if (!popover.classList.contains('hidden')) {
+                renderPicker();
+                // Auto-scroll to selected hour and minute
+                setTimeout(() => {
+                    const activeHour = document.querySelector('#hours-list [data-selected="true"]');
+                    const activeMinute = document.querySelector('#minutes-list [data-selected="true"]');
+                    if (activeHour) activeHour.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                    if (activeMinute) activeMinute.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                }, 50);
+            }
+        }
+
+        document.addEventListener('click', (e) => {
+            const container = document.getElementById('datetime-picker-container');
+            const popover = document.getElementById('datetime-popover');
+            if (container && !container.contains(e.target)) {
+                popover.classList.add('hidden');
+            }
+        });
+
+        function prevMonth(e) {
+            e.stopPropagation();
+            viewMonth.setMonth(viewMonth.getMonth() - 1);
+            renderPicker();
+        }
+
+        function nextMonth(e) {
+            e.stopPropagation();
+            viewMonth.setMonth(viewMonth.getMonth() + 1);
+            renderPicker();
+        }
+
+        function selectDate(year, month, day, e) {
+            e.stopPropagation();
+            currentPickerDate.setFullYear(year);
+            currentPickerDate.setMonth(month);
+            currentPickerDate.setDate(day);
+            renderPicker();
+            updateTriggerDisplay();
+        }
+
+        function selectHour(h, e) {
+            e.stopPropagation();
+            currentPickerDate.setHours(h);
+            renderPicker();
+            updateTriggerDisplay();
+        }
+
+        function selectMinute(m, e) {
+            e.stopPropagation();
+            currentPickerDate.setMinutes(m);
+            renderPicker();
+            updateTriggerDisplay();
+        }
+
+        function renderPicker() {
+            // Render Calendar
+            const grid = document.getElementById('calendar-grid');
+            const monthLabel = document.getElementById('calendar-month');
+            grid.innerHTML = '';
+
+            const year = viewMonth.getFullYear();
+            const month = viewMonth.getMonth();
+
+            monthLabel.innerText = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(viewMonth);
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            // Header days
+            const dayNames = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+            dayNames.forEach(d => {
+                grid.innerHTML += `<div class="text-[11px] font-bold text-gray-500 text-center py-1">${d}</div>`;
+            });
+
+            // Empty days
+            for (let i = 0; i < firstDay; i++) {
+                grid.innerHTML += `<div></div>`;
+            }
+
+            // Days
+            const today = new Date();
+            for (let d = 1; d <= daysInMonth; d++) {
+                const isSelected = currentPickerDate.getDate() === d && currentPickerDate.getMonth() === month && currentPickerDate.getFullYear() === year;
+                const isToday = today.getDate() === d && today.getMonth() === month && today.getFullYear() === year;
+
+                let classes = "w-8 h-8 flex items-center justify-center text-[13px] rounded-lg cursor-pointer transition-colors mx-auto ";
+
+                if (isSelected) {
+                    classes += "bg-white text-black font-bold shadow-sm"; // Shadcn active state
+                } else if (isToday) {
+                    classes += "bg-[#1A1A1A] text-white hover:bg-[#262626]";
+                } else {
+                    classes += "text-gray-300 hover:bg-[#1A1A1A] hover:text-white";
+                }
+
+                grid.innerHTML += `<div class="${classes}" onclick="selectDate(${year}, ${month}, ${d}, event)">${d}</div>`;
+            }
+
+            // Render Hour List
+            const hoursContainer = document.getElementById('hours-list');
+            hoursContainer.innerHTML = '';
+            for (let h = 0; h < 24; h++) {
+                const hh = h.toString().padStart(2, '0');
+                const isSelected = currentPickerDate.getHours() === h;
+                let classes = "px-2 py-1.5 text-[13px] font-medium rounded-md cursor-pointer transition-colors text-center w-full ";
+                if (isSelected) {
+                    classes += "bg-white text-black font-bold shadow-sm";
+                } else {
+                    classes += "text-gray-400 hover:bg-[#1A1A1A] hover:text-white";
+                }
+                hoursContainer.innerHTML += `<div ${isSelected ? 'data-selected="true"' : ''} class="${classes}" onclick="selectHour(${h}, event)">${hh}</div>`;
+            }
+
+            // Render Minute List
+            const minutesContainer = document.getElementById('minutes-list');
+            minutesContainer.innerHTML = '';
+            for (let m = 0; m < 60; m++) {
+                const mm = m.toString().padStart(2, '0');
+                const isSelected = currentPickerDate.getMinutes() === m;
+                let classes = "px-2 py-1.5 text-[13px] font-medium rounded-md cursor-pointer transition-colors text-center w-full ";
+                if (isSelected) {
+                    classes += "bg-white text-black font-bold shadow-sm";
+                } else {
+                    classes += "text-gray-400 hover:bg-[#1A1A1A] hover:text-white";
+                }
+                minutesContainer.innerHTML += `<div ${isSelected ? 'data-selected="true"' : ''} class="${classes}" onclick="selectMinute(${m}, event)">${mm}</div>`;
+            }
+        }
+
+        function updateTriggerDisplay() {
+            const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            const m = monthNames[currentPickerDate.getMonth()];
+            const d = currentPickerDate.getDate();
+            const y = currentPickerDate.getFullYear();
+            const hh = currentPickerDate.getHours().toString().padStart(2, '0');
+            const mm = currentPickerDate.getMinutes().toString().padStart(2, '0');
+
+            // Format to exactly match the image: "Mar 24, 2026, 13:25"
+            document.getElementById('datetime-display').innerText = `${m} ${d}, ${y}, ${hh}:${mm}`;
+        }
+
+        // --- Core Application Logic ---
+
+        function initTimeline() {
+            const wrapper = document.getElementById('nodes-wrapper');
+            wrapper.innerHTML = '';
+
+            stagesData.forEach((stage, index) => {
+                const isTop = index % 2 === 0;
+                const percent = (index / (stagesData.length - 1)) * 100;
+
+                const nodeDiv = document.createElement('div');
+                nodeDiv.className = "absolute top-1/2 w-0 h-0 transition-all duration-300 hover:z-50 z-10";
+                nodeDiv.style.left = `${percent}%`;
+
+                const tagsHtml = stage.tags.map(tag =>
+                    `<span class="text-[10px] xl:text-[11px] font-semibold text-gray-200 bg-white/[0.04] border border-white/10 uppercase px-2 py-1 rounded-md w-fit tracking-[0.12em] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">${tag}</span>`
+                ).join('');
+
+                const cardWrapperClass = `absolute ${isTop ? "bottom-[44px] xl:bottom-[56px]" : "top-[44px] xl:top-[56px]"} left-1/2 -translate-x-1/2 transition-all duration-500 transform w-[220px] md:w-[250px] lg:w-[290px] xl:w-[320px] group`;
+
+                nodeDiv.innerHTML = `
+                    <div id="dot-${index}" class="w-5 h-5 xl:w-6 xl:h-6 rounded-full bg-[#111] border-[3px] border-[#2A2A2A] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transition-all duration-500"></div>
+                    <div id="connector-${index}" class="absolute ${isTop ? "bottom-[12px]" : "top-[12px]"} left-1/2 -translate-x-1/2 w-0.5 h-7 xl:h-10 bg-[#2A2A2A] transition-colors duration-300"></div>
+                    
+                    <div id="card-wrapper-${index}" class="${cardWrapperClass}">
+                        <div id="card-${index}" class="bg-gradient-to-b from-[#141821] to-[#0b0d10] border border-[#2b313b] rounded-2xl p-4 xl:p-5 shadow-[0_16px_45px_rgba(0,0,0,0.45)] transition-all duration-500 flex flex-col h-full backdrop-blur-md relative overflow-hidden group-hover:-translate-y-0.5 group-hover:border-[#4d5969] group-hover:shadow-[0_22px_55px_rgba(0,0,0,0.55)]">
+                            <div class="absolute inset-0 bg-gradient-to-br from-white/[0.08] via-transparent to-transparent opacity-60 transition-opacity pointer-events-none"></div>
+                            
+                            <div class="flex flex-col md:flex-row md:items-center gap-2 mb-3 xl:mb-4 relative z-10">
+                                <span class="bg-[#e31221] text-white text-[10px] xl:text-xs font-black px-2 py-0.5 rounded tracking-widest self-start md:self-auto">${stage.hours}H</span>
+                                <h3 class="text-white font-bold text-base xl:text-lg leading-tight">${stage.title}</h3>
+                            </div>
+                            <div class="flex flex-col gap-1.5 xl:gap-2 mb-4 xl:mb-5 flex-1 relative z-10">
+                                ${tagsHtml}
+                            </div>
+                            <div class="mt-auto pt-3 border-t border-white/10 relative z-10">
+                                <div class="text-[11px] xl:text-sm text-gray-400 flex flex-col xl:flex-row xl:justify-between xl:items-center gap-1">
+                                    <span id="label-${index}">Time to stage:</span>
+                                    <span id="timer-${index}" class="text-gray-200 font-semibold tracking-[0.04em] xl:text-base">--:--:--</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                wrapper.appendChild(nodeDiv);
+            });
+        }
+
+        function formatTime(ms) {
+            const isNegative = ms < 0;
+            const absMs = Math.abs(ms);
+            const h = Math.floor(absMs / 3600000);
+            const m = Math.floor((absMs % 3600000) / 60000).toString().padStart(2, '0');
+            const s = Math.floor((absMs % 60000) / 1000).toString().padStart(2, '0');
+            return `${isNegative ? '-' : ''}${h}h ${m}m ${s}s`;
+        }
+
+        function updateDashboard() {
+            if (!fastingStartTime) return;
+
+            const now = new Date();
+            const diffMs = now - fastingStartTime;
+            const isFuture = diffMs < 0;
+            const diffHours = diffMs / 3600000;
+
+            const totalDisplay = document.getElementById('total-time');
+            const currentStageDisplay = document.getElementById('current-stage-display');
+            const nextStageDisplay = document.getElementById('next-stage-display');
+
+            if (isFuture) {
+                totalDisplay.innerText = "Not Started";
+                currentStageDisplay.innerText = "Waiting...";
+                currentStageDisplay.className = "text-sm md:text-base font-bold text-gray-500 transition-colors duration-300";
+                nextStageDisplay.innerText = stagesData[0].title;
+                document.getElementById('progress-line').style.width = '0%';
+            } else {
+                const totalH = Math.floor(diffMs / 3600000).toString().padStart(2, '0');
+                const totalM = Math.floor((diffMs % 3600000) / 60000).toString().padStart(2, '0');
+                const totalS = Math.floor((diffMs % 60000) / 1000).toString().padStart(2, '0');
+                totalDisplay.innerText = `${totalH}h ${totalM}m ${totalS}s`;
+            }
+
+            let activeIndex = -1;
+            let progressPercent = 0;
+            const totalSegments = stagesData.length - 1;
+
+            if (!isFuture) {
+                for (let i = 0; i < stagesData.length; i++) {
+                    if (diffHours >= stagesData[i].startHour && diffHours < stagesData[i].endHour) {
+                        activeIndex = i;
+                        break;
+                    }
+                }
+                if (diffHours >= stagesData[stagesData.length - 1].startHour) {
+                    activeIndex = stagesData.length - 1;
+                }
+
+                if (activeIndex === stagesData.length - 1) {
+                    progressPercent = 100;
+                } else if (activeIndex !== -1) {
+                    const stage = stagesData[activeIndex];
+                    const fraction = (diffHours - stage.startHour) / (stage.endHour - stage.startHour);
+                    progressPercent = ((activeIndex + fraction) / totalSegments) * 100;
+                }
+                document.getElementById('progress-line').style.width = `${progressPercent}%`;
+
+                currentStageDisplay.innerText = stagesData[activeIndex].title;
+                currentStageDisplay.className = "text-sm md:text-base font-bold text-[#e31221] transition-colors duration-300 drop-shadow-[0_0_5px_rgba(227,18,33,0.4)]";
+
+                if (activeIndex < stagesData.length - 1) {
+                    nextStageDisplay.innerText = stagesData[activeIndex + 1].title;
+                } else {
+                    nextStageDisplay.innerText = "Goal Reached";
+                }
+            }
+
+            stagesData.forEach((stage, i) => {
+                const isTop = i % 2 === 0;
+                const timerEl = document.getElementById(`timer-${i}`);
+                const labelEl = document.getElementById(`label-${i}`);
+                const dotEl = document.getElementById(`dot-${i}`);
+                const cardWrapperEl = document.getElementById(`card-wrapper-${i}`);
+                const cardEl = document.getElementById(`card-${i}`);
+                const connectorEl = document.getElementById(`connector-${i}`);
+
+                const stageStartMs = fastingStartTime.getTime() + (stage.startHour * 3600000);
+                const diffFromStartMs = now.getTime() - stageStartMs;
+
+                const baseWrapperClass = `absolute ${isTop ? "bottom-[44px] xl:bottom-[56px]" : "top-[44px] xl:top-[56px]"} left-1/2 -translate-x-1/2 transition-all duration-500 transform w-[220px] md:w-[250px] lg:w-[290px] xl:w-[320px] group`;
+                const baseCardClass = "rounded-2xl p-4 xl:p-5 transition-all duration-500 flex flex-col h-full backdrop-blur-md relative overflow-hidden border shadow-[0_16px_45px_rgba(0,0,0,0.45)] group-hover:-translate-y-0.5 group-hover:shadow-[0_22px_55px_rgba(0,0,0,0.55)]";
+
+                if (diffFromStartMs < 0) {
+                    labelEl.innerText = "Time to stage:";
+                    timerEl.innerText = formatTime(Math.abs(diffFromStartMs));
+                    timerEl.className = "text-gray-200 font-semibold tracking-[0.04em] xl:text-base";
+                    dotEl.className = "w-5 h-5 xl:w-6 xl:h-6 rounded-full bg-[#111] border-[3px] border-[#2A2A2A] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transition-all duration-500";
+                    cardWrapperEl.className = `${baseWrapperClass} scale-100 z-20`;
+                    cardEl.className = `${baseCardClass} bg-gradient-to-b from-[#141821] to-[#0b0d10] border-[#2b313b] hover:border-[#4d5969]`;
+                    connectorEl.style.backgroundColor = '#2A2A2A';
+                } else {
+                    timerEl.innerText = formatTime(diffFromStartMs);
+                    if (i === activeIndex && !isFuture) {
+                        labelEl.innerText = "Time in stage:";
+                        timerEl.className = "text-[#ff4d61] font-semibold tracking-[0.04em] xl:text-base drop-shadow-sm";
+                        dotEl.className = "w-6 h-6 xl:w-8 xl:h-8 rounded-full bg-[#e31221] border-[4px] border-[#3a0a0d] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transition-all duration-500 active-dot z-30";
+                        cardWrapperEl.className = `${baseWrapperClass} scale-105 xl:scale-110 z-30`;
+                        cardEl.className = `${baseCardClass} bg-gradient-to-b from-[#2a1017] to-[#12070b] border-[#ff2d45] shadow-[0_20px_60px_rgba(227,18,33,0.25)]`;
+                        connectorEl.style.backgroundColor = '#e31221';
+                    } else {
+                        labelEl.innerText = "Time from start:";
+                        timerEl.className = "text-gray-200 font-semibold tracking-[0.04em] xl:text-base";
+                        dotEl.className = "w-5 h-5 xl:w-6 xl:h-6 rounded-full bg-[#e31221] border-[3px] border-[#e31221] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transition-all duration-500 z-10";
+                        cardWrapperEl.className = `${baseWrapperClass} scale-100 z-20`;
+                        cardEl.className = `${baseCardClass} bg-gradient-to-b from-[#161a23] to-[#0b0d10] border-[#47202a]`;
+                        connectorEl.style.backgroundColor = '#e31221';
+                    }
+                }
+            });
+        }
+
+        function setNow() {
+            currentPickerDate = new Date();
+            currentPickerDate.setSeconds(0);
+            currentPickerDate.setMilliseconds(0);
+            viewMonth = new Date(currentPickerDate.getFullYear(), currentPickerDate.getMonth(), 1);
+
+            updateTriggerDisplay();
+            saveFastingTime(); // Auto-start session for exact "now"
+        }
+
+        function saveFastingTime() {
+            if (!currentPickerDate) return;
+
+            // Set fasting start to whatever is visually selected in the Custom Picker
+            fastingStartTime = new Date(currentPickerDate);
+            localStorage.setItem('fastingStart', fastingStartTime.toISOString());
+
+            document.getElementById('datetime-popover').classList.add('hidden');
+
+            document.getElementById('empty-state').style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('empty-state').style.display = 'none';
+                document.getElementById('timeline-container').style.opacity = '1';
+            }, 500);
+
+            if (timerInterval) clearInterval(timerInterval);
+            updateDashboard();
+            timerInterval = setInterval(updateDashboard, 1000);
+        }
+
+        function resetFasting() {
+            localStorage.removeItem('fastingStart');
+            fastingStartTime = null;
+            if (timerInterval) clearInterval(timerInterval);
+
+            // Reset Picker to now
+            currentPickerDate = new Date();
+            currentPickerDate.setSeconds(0);
+            updateTriggerDisplay();
+
+            document.getElementById('total-time').innerText = "00h 00m 00s";
+            document.getElementById('progress-line').style.width = '0%';
+
+            document.getElementById('current-stage-display').innerText = "--";
+            document.getElementById('current-stage-display').className = "text-sm md:text-base font-bold text-gray-300 transition-colors duration-300";
+            document.getElementById('next-stage-display').innerText = "--";
+
+            document.getElementById('empty-state').style.display = 'flex';
+            setTimeout(() => {
+                document.getElementById('empty-state').style.opacity = '1';
+                document.getElementById('timeline-container').style.opacity = '0';
+            }, 50);
+
+            initTimeline();
+        }
+
+        // On Load Init
+        window.addEventListener('DOMContentLoaded', () => {
+            initTimeline();
+
+            const savedTime = localStorage.getItem('fastingStart');
+            if (savedTime) {
+                fastingStartTime = new Date(savedTime);
+
+                // Initialize custom picker with saved time
+                currentPickerDate = new Date(fastingStartTime);
+                viewMonth = new Date(currentPickerDate.getFullYear(), currentPickerDate.getMonth(), 1);
+                updateTriggerDisplay();
+
+                document.getElementById('empty-state').style.display = 'none';
+                document.getElementById('timeline-container').style.opacity = '1';
+
+                updateDashboard();
+                timerInterval = setInterval(updateDashboard, 1000);
+            } else {
+                updateTriggerDisplay();
+            }
+
+            // Pre-render the picker hidden content
+            renderPicker();
+        });
+    </script>
+</body>
+
+</html>
